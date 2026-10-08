@@ -5,161 +5,318 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LinkedIn Outreach Funnel</title>
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--text:#1d2330;--muted:#6b7280;--accent:#0a66c2;--ok:#15803d;--warn:#b45309;--border:#e5e7eb}
+:root{--bg:#f5f6f8;--card:#fff;--text:#1d2330;--muted:#6b7280;--accent:#0a66c2;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--border:#e5e7eb}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
-header{background:var(--accent);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+header{background:var(--accent);color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 header h1{margin:0;font-size:20px}
-nav button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:8px 14px;border-radius:6px;cursor:pointer;margin-left:6px;font-size:14px}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:7px 12px;border-radius:6px;cursor:pointer;font-size:14px}
 nav button.active{background:#fff;color:var(--accent)}
-main{max-width:1100px;margin:24px auto;padding:0 16px}
+nav .count{background:#fbbf24;color:#000;border-radius:99px;padding:0 6px;font-size:11px;margin-left:4px}
+main{max-width:1150px;margin:20px auto;padding:0 16px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card h3{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
 label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
-input,select,textarea{width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font:inherit;background:#fff}
-textarea{min-height:90px;resize:vertical;margin-top:8px}
-.btn{display:inline-block;background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px;text-decoration:none}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font:inherit;background:#fff;color:var(--text)}
+textarea{min-height:90px;resize:vertical}
+.task textarea{margin-top:8px}
+.btn{display:inline-block;background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px;text-decoration:none;white-space:nowrap}
 .btn.secondary{background:#eef2f7;color:var(--text)}
 .btn.ok{background:var(--ok)}
+.btn.bad{background:#fee2e2;color:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:13px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
-.region-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
 .badge{font-size:12px;padding:3px 9px;border-radius:99px;background:#eef2f7;white-space:nowrap}
 .badge.live{background:#dcfce7;color:var(--ok)}
-.badge.weekend{background:#fef3c7;color:var(--warn)}
+.badge.weekend,.badge.edited{background:#fef3c7;color:var(--warn)}
+.badge.hot{background:#dbeafe;color:var(--accent)}
 .task{border-top:1px solid var(--border);padding:14px 0}
 .muted{color:var(--muted);font-size:13px}
 .warn{color:var(--warn);font-size:13px}
 .banner{background:#fef3c7;border-color:#fcd34d}
+.info{background:#eff6ff;border-color:#bfdbfe}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:8px;border-bottom:1px solid var(--border);vertical-align:top}
 td select{width:auto}
 .stat{font-size:28px;font-weight:700}
-.hidden{display:none}
+.hidden{display:none!important}
+a{color:var(--accent)}
+code{background:#eef2f7;padding:1px 5px;border-radius:4px;font-size:12px}
+dialog{border:none;border-radius:12px;padding:0;width:min(820px,95vw);max-height:92vh}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg-body{padding:20px;overflow:auto;max-height:80vh}
+.dlg-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.timeline{font-size:13px;max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px}
+.timeline div{padding:4px 0;border-bottom:1px dashed var(--border)}
+.reply-box{background:#f8fafc;border-left:3px solid var(--accent);padding:8px 10px;margin:8px 0;font-size:14px;white-space:pre-wrap}
+.span2{grid-column:span 2}
+@media(max-width:600px){.span2{grid-column:span 1}}
 </style>
 </head>
 <body>
 <header>
   <h1>LinkedIn Outreach Funnel</h1>
-  <nav>
-    <button data-tab="today" class="active">Aaj ke Tasks</button>
+  <nav id="nav">
+    <button data-tab="today" class="active">Today</button>
+    <button data-tab="find">Find Leads</button>
     <button data-tab="leads">Leads</button>
+    <button data-tab="replies">Replies <span class="count hidden" id="reply-count"></span></button>
+    <button data-tab="templates">Templates</button>
     <button data-tab="stats">Stats</button>
     <button data-tab="settings">Settings</button>
   </nav>
 </header>
 
 <main>
+  <!-- TODAY -->
   <section id="today"></section>
 
-  <section id="leads" class="hidden">
-    <div class="card">
-      <h3>Naya lead add karo</h3>
-      <div class="grid">
-        <div><label>Name *</label><input id="f-name"></div>
-        <div><label>Company *</label><input id="f-company"></div>
-        <div><label>Industry * (e.g. real estate)</label><input id="f-industry"></div>
-        <div><label>Country</label><select id="f-country"></select></div>
-        <div><label>LinkedIn profile URL</label><input id="f-url"></div>
-      </div>
-      <div class="row"><button class="btn" id="add-btn">Add Lead</button><span class="muted" id="add-msg"></span></div>
+  <!-- FIND LEADS -->
+  <section id="find" class="hidden">
+    <div class="card info">
+      <b>How to find leads:</b> 1) Pick target titles, industry and location below and open the LinkedIn / Google search. 2) Open matching profiles. 3) Add each good prospect with the form below (company size, title and a personal hook make the message much better). Aim for business owners / decision makers at companies with 2–200 employees.
     </div>
     <div class="card">
-      <div class="region-head">
-        <h3 style="margin:0">Saare leads</h3>
+      <h3>Search builder</h3>
+      <div class="grid">
+        <div><label>Job titles (comma separated)</label><input id="q-titles" value="Owner, Founder, CEO, Managing Director"></div>
+        <div><label>Industry / keyword</label><input id="q-industry" placeholder="e.g. real estate"></div>
+        <div><label>Location</label><input id="q-location" placeholder="e.g. Dubai"></div>
+      </div>
+      <div class="row">
+        <a class="btn" id="q-li-people" target="_blank" rel="noopener">Search people on LinkedIn</a>
+        <a class="btn secondary" id="q-li-company" target="_blank" rel="noopener">Search companies on LinkedIn</a>
+        <a class="btn secondary" id="q-google" target="_blank" rel="noopener">Google search (LinkedIn profiles)</a>
+      </div>
+      <p class="muted" id="q-preview"></p>
+    </div>
+
+    <div class="card">
+      <h3>Add a lead</h3>
+      <div class="grid">
+        <div><label>Full name *</label><input id="f-name"></div>
+        <div><label>Job title</label><input id="f-title" placeholder="e.g. Founder"></div>
+        <div><label>Company *</label><input id="f-company"></div>
+        <div><label>Industry / category *</label><input id="f-industry" placeholder="e.g. real estate" list="industry-list"></div>
+        <div><label>Company size</label><select id="f-companySize"></select></div>
+        <div><label>Country</label><select id="f-country"></select></div>
+        <div><label>LinkedIn profile URL</label><input id="f-url" placeholder="https://www.linkedin.com/in/..."></div>
+        <div><label>Company website</label><input id="f-website"></div>
+        <div class="span2"><label>Personal hook (recent post, award, news) – optional</label><input id="f-hook" placeholder="e.g. your post about the new Dubai Marina launch"></div>
+        <div class="span2"><label>Their likely pain point – optional (else Settings default is used)</label><input id="f-painPoint" placeholder="e.g. paying a lot for portal leads that don't convert"></div>
+      </div>
+      <div class="row"><button class="btn" id="add-btn">Add Lead</button><span class="muted" id="add-msg"></span></div>
+      <datalist id="industry-list"></datalist>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <h3 style="margin:0">Company prospects</h3>
         <div class="row" style="margin:0">
+          <button class="btn secondary" id="co-add-btn">+ Add company</button>
+          <label class="btn secondary" style="margin:0;color:var(--text)">Import CSV<input type="file" id="co-import" accept=".csv" class="hidden"></label>
+        </div>
+      </div>
+      <p class="muted">Research list of target companies. Use "Find people" to open LinkedIn for decision makers at that company, then "Add lead" to pre-fill the form above. CSV columns: company, website, industry, companySize, country, linkedin, notes</p>
+      <div style="overflow-x:auto"><table id="co-table"></table></div>
+    </div>
+  </section>
+
+  <!-- LEADS -->
+  <section id="leads" class="hidden">
+    <div class="card">
+      <div class="head">
+        <h3 style="margin:0">All leads</h3>
+        <div class="row" style="margin:0">
+          <input id="lead-search" placeholder="Search name / company" style="width:200px">
           <select id="filter-stage" style="width:auto"></select>
+          <select id="filter-country" style="width:auto"></select>
           <button class="btn secondary" id="export-btn">Export CSV</button>
           <label class="btn secondary" style="margin:0;color:var(--text)">Import CSV<input type="file" id="import-file" accept=".csv" class="hidden"></label>
         </div>
       </div>
-      <p class="muted">CSV columns: name, company, industry, country, url. Country codes: UAE, SAUDI, QATAR, UK, US_EAST, US_WEST, AU_EAST, AU_WEST</p>
+      <p class="muted">CSV columns: name, title, company, industry, companySize, country, url, website, hook, painPoint. Country codes: UAE, SAUDI, QATAR, UK, US_EAST, US_WEST, AU_EAST, AU_WEST, INDIA, CANADA, SINGAPORE</p>
       <div style="overflow-x:auto"><table id="leads-table"></table></div>
     </div>
   </section>
 
+  <!-- REPLIES -->
+  <section id="replies" class="hidden"></section>
+
+  <!-- TEMPLATES -->
+  <section id="templates" class="hidden">
+    <div class="card">
+      <div class="head">
+        <h3 style="margin:0">Outreach templates</h3>
+        <div class="row" style="margin:0">
+          <select id="tpl-set" style="width:auto"></select>
+          <input id="tpl-new-industry" placeholder="New industry set, e.g. clinics" style="width:220px">
+          <button class="btn secondary" id="tpl-add-set">+ Add industry set</button>
+        </div>
+      </div>
+      <p class="muted">Leads whose industry matches an industry set use that set; everyone else uses Default. Leave a box empty in an industry set to fall back to Default.<br>
+      Variables: <code>{firstName}</code> <code>{name}</code> <code>{title}</code> <code>{company}</code> <code>{industry}</code> <code>{companySize}</code> <code>{country}</code> <code>{hook}</code> <code>{pain}</code> <code>{myName}</code> <code>{service}</code> <code>{area}</code> <code>{clientType}</code> <code>{result}</code> <code>{hi}</code> <code>{cta}</code><br>
+      Optional part: wrap text in <code>[[ ]]</code> and it is removed if a variable inside is empty, e.g. <code>[[Loved your post on {hook}. ]]</code></p>
+      <div id="tpl-fields"></div>
+      <div class="row"><button class="btn" id="tpl-save">Save templates</button><button class="btn bad" id="tpl-del-set">Delete this industry set</button><button class="btn secondary" id="tpl-reset">Reset Default to original</button><span class="muted" id="tpl-msg"></span></div>
+    </div>
+    <div class="card">
+      <h3>Reply templates</h3>
+      <p class="muted">Quick answers for common replies. Same variables work here.</p>
+      <div id="rtpl-fields"></div>
+      <div class="row"><button class="btn" id="rtpl-save">Save reply templates</button><span class="muted" id="rtpl-msg"></span></div>
+    </div>
+  </section>
+
+  <!-- STATS -->
   <section id="stats" class="hidden"></section>
 
+  <!-- SETTINGS -->
   <section id="settings" class="hidden">
     <div class="card">
-      <h3>Aapki details (messages mein auto-fill hongi)</h3>
+      <h3>Your details (auto-filled into messages)</h3>
       <div class="grid" id="settings-grid"></div>
-      <div class="row"><button class="btn" id="save-settings">Save</button><span class="muted" id="save-msg"></span></div>
-      <p class="muted">Past client aur result bilkul sach likho. Data sirf isi browser mein save hota hai. Backup ke liye Leads tab se CSV export karte raho.</p>
+      <p class="muted">Write your past client and result truthfully.</p>
+    </div>
+    <div class="card">
+      <h3>LinkedIn accounts & daily limits</h3>
+      <p class="muted">Add the LinkedIn profile(s) you send from. <b>No password is stored here</b> – you stay logged in to LinkedIn in your own browser and send each message yourself. This keeps your account safe (LinkedIn restricts automated tools).</p>
+      <div id="acc-list"></div>
+      <div class="grid" style="margin-top:10px">
+        <div><label>Account name</label><input id="acc-name" placeholder="e.g. Arslan – main"></div>
+        <div><label>Your LinkedIn profile URL</label><input id="acc-url" placeholder="https://www.linkedin.com/in/..."></div>
+        <div><label>Daily connection requests</label><input id="acc-req" type="number" value="25" min="1" max="100"></div>
+        <div><label>Daily messages</label><input id="acc-msg" type="number" value="50" min="1" max="200"></div>
+      </div>
+      <div class="row"><button class="btn secondary" id="acc-add">+ Add account</button></div>
+      <p class="muted">Safe range for a new account: 20–30 requests/day and under ~100 per week. Increase slowly once your accept rate is above 30%.</p>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-top:0"><button class="btn" id="save-settings">Save settings</button><span class="muted" id="save-msg"></span></div>
+      <div class="row">
+        <button class="btn secondary" id="backup-btn">Download full backup (JSON)</button>
+        <label class="btn secondary" style="margin:0;color:var(--text)">Restore backup<input type="file" id="restore-file" accept=".json" class="hidden"></label>
+      </div>
+      <p class="muted">All data is saved only in this browser. Download a backup regularly.</p>
     </div>
   </section>
 </main>
 
+<!-- LEAD DIALOG -->
+<dialog id="lead-dlg">
+  <div class="dlg-body" id="lead-dlg-body"></div>
+  <div class="dlg-foot">
+    <button class="btn bad" id="dlg-delete">Delete lead</button>
+    <span style="flex:1"></span>
+    <button class="btn secondary" id="dlg-close">Cancel</button>
+    <button class="btn" id="dlg-save">Save</button>
+  </div>
+</dialog>
+
 <script>
 const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => !u ? "#" : (/^https?:\/\//i.test(u) ? esc(u) : "https://" + esc(u));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const todayStr = () => new Date().toLocaleDateString("en-CA");
 const daysBetween = (a, b) => (Date.parse(b) - Date.parse(a)) / 864e5;
+const flash = (sel, txt) => { $(sel).textContent = txt; setTimeout(() => $(sel).textContent = "", 2000); };
 
 /* ---------- Config ---------- */
 const REGIONS = {
-  UAE:     { tz:"Asia/Dubai",          weekend:["Sat","Sun"], style:"me", h:[9,11],  label:"UAE" },
-  SAUDI:   { tz:"Asia/Riyadh",         weekend:["Fri","Sat"], style:"me", h:[9,11],  label:"Saudi Arabia" },
-  QATAR:   { tz:"Asia/Qatar",          weekend:["Fri","Sat"], style:"me", h:[9,11],  label:"Qatar" },
-  UK:      { tz:"Europe/London",       weekend:["Sat","Sun"], style:"uk", h:[9,11],  label:"United Kingdom" },
-  US_EAST: { tz:"America/New_York",    weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"USA (East)" },
-  US_WEST: { tz:"America/Los_Angeles", weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"USA (West)" },
-  AU_EAST: { tz:"Australia/Sydney",    weekend:["Sat","Sun"], style:"au", h:[13,15], label:"Australia (East)" },
-  AU_WEST: { tz:"Australia/Perth",     weekend:["Sat","Sun"], style:"au", h:[13,15], label:"Australia (Perth)" }
+  UAE:       { tz:"Asia/Dubai",          weekend:["Sat","Sun"], style:"me", h:[9,11],  label:"UAE" },
+  SAUDI:     { tz:"Asia/Riyadh",         weekend:["Fri","Sat"], style:"me", h:[9,11],  label:"Saudi Arabia" },
+  QATAR:     { tz:"Asia/Qatar",          weekend:["Fri","Sat"], style:"me", h:[9,11],  label:"Qatar" },
+  UK:        { tz:"Europe/London",       weekend:["Sat","Sun"], style:"uk", h:[9,11],  label:"United Kingdom" },
+  US_EAST:   { tz:"America/New_York",    weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"USA (East)" },
+  US_WEST:   { tz:"America/Los_Angeles", weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"USA (West)" },
+  CANADA:    { tz:"America/Toronto",     weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"Canada" },
+  AU_EAST:   { tz:"Australia/Sydney",    weekend:["Sat","Sun"], style:"au", h:[13,15], label:"Australia (East)" },
+  AU_WEST:   { tz:"Australia/Perth",     weekend:["Sat","Sun"], style:"au", h:[13,15], label:"Australia (Perth)" },
+  SINGAPORE: { tz:"Asia/Singapore",      weekend:["Sat","Sun"], style:"uk", h:[10,12], label:"Singapore" },
+  INDIA:     { tz:"Asia/Kolkata",        weekend:["Sun"],       style:"uk", h:[10,12], label:"India" }
 };
+const SIZES = ["", "1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
 
 const STYLE = {
-  me: { hi:"Hello {name}, hope you are doing well.", cta:"Would you be open to a short call at a time that suits you?" },
-  uk: { hi:"Hi {name},", cta:"Would a quick 15-minute chat be useful at some point?" },
-  us: { hi:"Hi {name},", cta:"Open to a quick 15-min call this week?" },
-  au: { hi:"Hi {name},", cta:"Keen for a quick 15-min chat sometime this week?" }
+  me: { hi:"Hello {firstName}, hope you are doing well.", cta:"Would you be open to a short call at a time that suits you?" },
+  uk: { hi:"Hi {firstName},", cta:"Would a quick 15-minute chat be useful at some point?" },
+  us: { hi:"Hi {firstName},", cta:"Open to a quick 15-min call this week?" },
+  au: { hi:"Hi {firstName},", cta:"Keen for a quick 15-min chat sometime this week?" }
 };
 
 const SEQ = {
-  new:      { next:"requested", gap:0, label:"Connection request",
-    tpl:"{hi} Came across {company} and liked what you're building in {industry}. I work with SMB owners in this space and would be glad to connect." },
-  accepted: { next:"msg1", gap:0, label:"Thank-you message",
-    tpl:"{hi} Thanks for connecting! Curious, what's the biggest challenge for {company} right now when it comes to {area}?" },
-  msg1:     { next:"msg2", gap:3, label:"Value message",
-    tpl:"Hi {name}, one pattern I keep seeing with {industry} businesses is {problem}. We recently helped {clientType} {result}. Happy to share the short checklist we used, if useful." },
-  msg2:     { next:"msg3", gap:5, label:"Call offer",
-    tpl:"Hi {name}, if {area} is a priority for {company} right now, I'd be happy to do a free 15-minute audit of your website, SEO and ads. {cta}" },
-  msg3:     { next:"closed_no_reply", gap:7, label:"Last follow-up",
-    tpl:"Hi {name}, I won't keep filling your inbox :) If {service} ever becomes a priority, just reply here. Wishing {company} continued success! – {myName}" }
+  new:      { next:"requested",       gap:0, label:"Connection request", kind:"request" },
+  accepted: { next:"msg1",            gap:0, label:"Thank-you message",  kind:"message" },
+  msg1:     { next:"msg2",            gap:3, label:"Value message",      kind:"message" },
+  msg2:     { next:"msg3",            gap:5, label:"Call offer",         kind:"message" },
+  msg3:     { next:"closed_no_reply", gap:7, label:"Last follow-up",     kind:"message" }
+};
+const DEFAULT_TPL = {
+  new:"{hi} [[Enjoyed your post on {hook}. ]]Came across {company} and liked what you're building in {industry}. I work with {industry} business owners and would be glad to connect.",
+  accepted:"{hi} Thanks for connecting! Curious, what's the biggest challenge for {company} right now when it comes to {area}?",
+  msg1:"Hi {firstName}, one pattern I keep seeing with {industry} businesses is {pain}. We recently helped {clientType} {result}. Happy to share the short checklist we used, if useful.",
+  msg2:"Hi {firstName}, if {area} is a priority for {company} right now, I'd be happy to do a free 15-minute audit of your website, SEO and ads. {cta}",
+  msg3:"Hi {firstName}, I won't keep filling your inbox :) If {service} ever becomes a priority, just reply here. Wishing {company} continued success! – {myName}"
+};
+const REPLY_TPL_DEFAULT = {
+  "Interested": "Great to hear, {firstName}! Would {cta_short} work? Here's what I'd cover in 15 minutes: a quick look at {company}'s website, SEO and ads, and 2–3 changes that could bring more leads.",
+  "Asked price": "Thanks for asking, {firstName}. It depends on scope, so I'd rather not guess. After a quick 15-minute call I can send a clear proposal with fixed pricing. Does this week work?",
+  "Not now": "Totally understand, {firstName}. Mind if I check back in a couple of months? Meanwhile, happy to send the free checklist if it's useful.",
+  "Wants more info": "Sure, {firstName}! In short: we help {industry} businesses with {service}. Recently we helped {clientType} {result}. Want me to send a few ideas specific to {company}?",
+  "Not interested": "No problem at all, {firstName}. Thanks for letting me know and all the best with {company}!"
 };
 
 const STAGE_LABEL = {
-  new:"Naya", requested:"Request bheji", accepted:"Accepted", msg1:"Thank-you bheja",
-  msg2:"Value msg bheja", msg3:"Call offer bheja", closed_no_reply:"No reply (closed)",
-  replied:"Reply aaya", call_booked:"Call booked", client:"Client 🎉", not_interested:"Not interested"
+  new:"New", requested:"Request sent", accepted:"Accepted", msg1:"Thank-you sent",
+  msg2:"Value msg sent", msg3:"Call offer sent", closed_no_reply:"No reply (closed)",
+  replied:"Replied", call_booked:"Call booked", client:"Client 🎉", not_interested:"Not interested"
 };
 const STAGES = Object.keys(STAGE_LABEL);
 const REPLIED = ["replied","call_booked","client","not_interested"];
 const ACCEPTED = ["accepted","msg1","msg2","msg3","closed_no_reply", ...REPLIED];
 
 const SETTING_FIELDS = [
-  ["myName","Aapka naam","e.g. Arslan"],
-  ["service","Aapki service","e.g. SEO, ads and website work"],
-  ["area","Kis area mein help (2-4 words)","e.g. getting more leads online"],
-  ["problem","Common problem","e.g. a website that gets traffic but very few leads"],
+  ["myName","Your name","e.g. Arslan"],
+  ["service","Your service","e.g. SEO, ads and website work"],
+  ["area","Area you help with (2-4 words)","e.g. getting more leads online"],
+  ["problem","Default pain point","e.g. a website that gets traffic but very few leads"],
   ["clientType","Past client (a + type + country) – REAL","e.g. a real estate agency in Dubai"],
-  ["result","Result jo diya (verb se shuru) – REAL","e.g. cut their cost per lead by 40% in 2 months"]
+  ["result","Result you delivered (start with a verb) – REAL","e.g. cut their cost per lead by 40% in 2 months"]
 ];
 const DEFAULTS = {
   myName:"", service:"SEO, ads and website work", area:"getting more leads online",
   problem:"a website and ad spend that bring traffic but very few quality leads",
   clientType:"", result:""
 };
-const PLACEHOLDER = { myName:"[YOUR NAME]", service:"[SERVICE]", area:"[AREA]", problem:"[PROBLEM]", clientType:"[CLIENT TYPE]", result:"[RESULT]" };
+const PLACEHOLDER = { myName:"[YOUR NAME]", service:"[SERVICE]", area:"[AREA]", pain:"[PAIN POINT]", clientType:"[CLIENT TYPE]", result:"[RESULT]" };
 
 /* ---------- Storage ---------- */
-const load = k => JSON.parse(localStorage.getItem(k) || "null");
-let leads = load("lf_leads") || [];
-let settings = { ...DEFAULTS, ...(load("lf_settings") || {}) };
-let log = load("lf_log") || [];
-const save = () => localStorage.setItem("lf_leads", JSON.stringify(leads));
-const addLog = t => { log.push({ d: todayStr(), t }); log = log.slice(-3000); localStorage.setItem("lf_log", JSON.stringify(log)); };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { alert("Could not save: " + e.message); } };
+let leads = load("lf_leads", []);
+let settings = { ...DEFAULTS, ...load("lf_settings", {}) };
+let log = load("lf_log", []);
+let accounts = load("lf_accounts", []);
+let templates = load("lf_templates", { default: { ...DEFAULT_TPL } });
+let replyTpl = load("lf_reply_tpl", { ...REPLY_TPL_DEFAULT });
+let companies = load("lf_companies", []);
+let activeAccount = load("lf_active_acc", "");
+
+leads.forEach(l => { l.history ??= []; l.custom ??= {}; l.title ??= ""; l.companySize ??= ""; l.hook ??= ""; l.painPoint ??= ""; l.website ??= ""; l.account ??= ""; });
+if (!templates.default) templates.default = { ...DEFAULT_TPL };
+
+const save = () => put("lf_leads", leads);
+const saveCompanies = () => put("lf_companies", companies);
+const addLog = (t, acc) => { log.push({ d: todayStr(), t, a: acc || "" }); log = log.slice(-5000); put("lf_log", log); };
+const addHistory = (l, text) => l.history.push({ d: new Date().toISOString().slice(0, 16).replace("T", " "), t: text });
+const accName = id => accounts.find(a => a.id === id)?.name || "";
+const limitsFor = id => { const a = accounts.find(x => x.id === id); return { req: a?.req || 25, msg: a?.msg || 50 }; };
+const countToday = (t, acc) => log.filter(x => x.d === todayStr() && x.t === t && (!acc || x.a === acc)).length;
 
 /* ---------- Time zone helpers ---------- */
 function partsIn(tz, d = new Date()) {
@@ -172,7 +329,7 @@ function offsetMin(tz, d) {
   return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - d.getTime()) / 60000;
 }
 function windowFor(code) {
-  const r = REGIONS[code], now = new Date(), p = partsIn(r.tz, now);
+  const r = REGIONS[code] || REGIONS.UAE, now = new Date(), p = partsIn(r.tz, now);
   const at = h => { const g = Date.UTC(+p.year, +p.month - 1, +p.day, h); return new Date(g - offsetMin(r.tz, new Date(g)) * 60000); };
   const s = at(r.h[0]), e = at(r.h[1]);
   const fmt = d => d.toLocaleTimeString("en-IN", { timeZone:"Asia/Kolkata", hour:"numeric", minute:"2-digit" });
@@ -185,117 +342,239 @@ function windowFor(code) {
 }
 
 /* ---------- Messages ---------- */
-function buildMsg(l) {
-  const st = STYLE[REGIONS[l.country].style];
-  const vars = { ...PLACEHOLDER, ...Object.fromEntries(Object.entries(settings).filter(([, v]) => v)), ...l,
-                 hi: st.hi.replace("{name}", l.name), cta: st.cta };
-  return SEQ[l.stage].tpl.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+function varsFor(l) {
+  const st = STYLE[(REGIONS[l.country] || REGIONS.UAE).style];
+  const firstName = (l.name || "").trim().split(/\s+/)[0] || "";
+  const s = Object.fromEntries(Object.entries(settings).filter(([, v]) => v));
+  const v = { ...PLACEHOLDER, ...s, pain: l.painPoint || settings.problem || PLACEHOLDER.pain,
+    firstName, name: l.name, title: l.title, company: l.company, industry: l.industry,
+    companySize: l.companySize, country: REGIONS[l.country]?.label || l.country, hook: l.hook,
+    cta: st.cta, cta_short: "a quick 15-minute call this week" };
+  v.hi = st.hi.replace("{firstName}", firstName);
+  return v;
 }
+function fill(tpl, v) {
+  tpl = tpl.replace(/\[\[([\s\S]*?)\]\]/g, (m, inner) => {
+    const keys = [...inner.matchAll(/\{(\w+)\}/g)].map(x => x[1]);
+    return keys.every(k => v[k]) ? inner : "";
+  });
+  return tpl.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m).replace(/ {2,}/g, " ").trim();
+}
+const tplFor = (l, stage) => (templates[(l.industry || "").toLowerCase().trim()] || {})[stage] || templates.default[stage] || DEFAULT_TPL[stage];
+const buildMsg = l => l.custom[l.stage] ?? fill(tplFor(l, l.stage), varsFor(l));
 const isDue = l => SEQ[l.stage] && daysBetween(l.lastDate, todayStr()) >= SEQ[l.stage].gap;
+const followUpDue = l => REPLIED.includes(l.stage) && !["client","not_interested"].includes(l.stage) && l.followUp && l.followUp <= todayStr();
 
 /* ---------- Render: Today ---------- */
 function renderToday() {
-  const due = leads.filter(isDue), t = todayStr();
-  const reqToday = log.filter(x => x.d === t && x.t === "request").length;
-  const msgToday = log.filter(x => x.d === t && x.t === "message").length;
-  const pending = leads.filter(l => l.stage === "requested");
+  const accFilter = activeAccount;
+  const mine = l => !accFilter || !l.account || l.account === accFilter;
+  const due = leads.filter(l => isDue(l) && mine(l));
+  const follow = leads.filter(l => followUpDue(l) && mine(l));
+  const lim = limitsFor(accFilter);
+  const reqToday = countToday("request", accFilter), msgToday = countToday("message", accFilter);
+  const pending = leads.filter(l => l.stage === "requested" && mine(l));
   const missing = SETTING_FIELDS.filter(([k]) => !settings[k]).map(([, label]) => label.split(" (")[0]);
   let h = "";
-  if (missing.length) h += `<div class="card banner"><b>Settings</b> mein ye bharna baaki hai: ${esc(missing.join(", "))}. Tabhi messages poore banenge.</div>`;
-  h += `<div class="card"><div class="grid">
-    <div><div class="stat">${due.length}</div><div class="muted">Aaj ke tasks</div></div>
-    <div><div class="stat" style="color:${reqToday >= 20 ? "#b91c1c" : "inherit"}">${reqToday}/20</div><div class="muted">Aaj ki connection requests (safe limit)</div></div>
-    <div><div class="stat">${msgToday}</div><div class="muted">Aaj ke messages</div></div>
+  if (!accounts.length) h += `<div class="card banner">Add your LinkedIn account in <b>Settings</b> to track daily limits per account.</div>`;
+  if (missing.length) h += `<div class="card banner">Still to fill in <b>Settings</b>: ${esc(missing.join(", "))}. Messages will be complete after that.</div>`;
+  h += `<div class="card"><div class="head"><div class="muted">Sending from:</div>
+    <select id="acc-switch" style="width:auto">${accounts.length ? "" : `<option value="">(no account added)</option>`}
+    ${accounts.map(a => `<option value="${a.id}" ${a.id === accFilter ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select></div>
+    <div class="grid" style="margin-top:12px">
+    <div><div class="stat">${due.length}</div><div class="muted">Messages to send today</div></div>
+    <div><div class="stat" style="color:${reqToday >= lim.req ? "var(--bad)" : "inherit"}">${reqToday}/${lim.req}</div><div class="muted">Connection requests today</div></div>
+    <div><div class="stat" style="color:${msgToday >= lim.msg ? "var(--bad)" : "inherit"}">${msgToday}/${lim.msg}</div><div class="muted">Messages today</div></div>
+    <div><div class="stat">${follow.length}</div><div class="muted">Reply follow-ups due</div></div>
     <div><div class="stat">${pending.length}</div><div class="muted">Pending requests</div></div>
   </div></div>`;
-  if (!due.length) h += `<div class="card">Aaj koi task nahi hai. Leads tab mein naye leads add karo.</div>`;
+
+  if (follow.length) {
+    h += `<div class="card"><h3>Reply follow-ups due</h3>`;
+    follow.forEach(l => {
+      h += `<div class="task"><b>${esc(l.name)}</b> – ${esc(l.company)} <span class="badge hot">${STAGE_LABEL[l.stage]}</span>
+        <div class="muted">Next step: ${esc(l.nextStep || "–")} · due ${esc(l.followUp)}</div>
+        ${l.reply ? `<div class="reply-box">${esc(l.reply)}</div>` : ""}
+        <div class="row"><button class="btn secondary sm" data-act="open" data-id="${l.id}">Open lead</button>
+        <a class="btn secondary sm" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Open profile</a></div></div>`;
+    });
+    h += `</div>`;
+  }
+
+  if (!due.length && !follow.length) h += `<div class="card">No tasks for today. Add new leads from the <b>Find Leads</b> tab.</div>`;
 
   const groups = {};
   due.forEach(l => (groups[l.country] = groups[l.country] || []).push(l));
   Object.keys(groups).map(c => [c, windowFor(c)]).sort((a, b) => a[1].start - b[1].start).forEach(([c, w]) => {
-    const badge = w.weekend ? `<span class="badge weekend">Wahan weekend hai, agle working day bhejo</span>`
-      : w.status === "live" ? `<span class="badge live">Abhi best time hai</span>`
-      : w.status === "later" ? `<span class="badge">Best time thodi der mein</span>`
-      : `<span class="badge">Aaj ka best time nikal gaya</span>`;
-    h += `<div class="card"><div class="region-head"><div><h3 style="margin:0">${REGIONS[c].label}</h3>
-      <div class="muted">Wahan abhi: ${w.localTime} | Best time: ${w.text}</div></div>${badge}</div>`;
+    const badge = w.weekend ? `<span class="badge weekend">Weekend there – send on next working day</span>`
+      : w.status === "live" ? `<span class="badge live">Best time now</span>`
+      : w.status === "later" ? `<span class="badge">Best time coming up</span>`
+      : `<span class="badge">Today's best time has passed</span>`;
+    h += `<div class="card"><div class="head"><div><h3 style="margin:0">${REGIONS[c]?.label || esc(c)}</h3>
+      <div class="muted">Local time: ${w.localTime} | Best time: ${w.text}</div></div>${badge}</div>`;
     groups[c].forEach(l => {
-      const msg = buildMsg(l);
-      h += `<div class="task"><b>${esc(l.name)}</b> – ${esc(l.company)} <span class="badge">${SEQ[l.stage].label}</span>
-        <textarea id="msg-${l.id}" data-count="${l.stage === "new" ? 1 : 0}" data-id="${l.id}">${esc(msg)}</textarea>
-        ${l.stage === "new" ? `<div id="cnt-${l.id}" class="${msg.length > 300 ? "warn" : "muted"}">${msg.length}/300 characters</div>` : ""}
+      const msg = buildMsg(l), edited = l.custom[l.stage] != null;
+      h += `<div class="task"><b><a href="#" data-act="open" data-id="${l.id}">${esc(l.name)}</a></b> – ${esc(l.title ? l.title + ", " : "")}${esc(l.company)}
+        <span class="badge">${SEQ[l.stage].label}</span> ${edited ? `<span class="badge edited">Edited</span>` : ""}
+        ${l.companySize ? `<span class="badge">${esc(l.companySize)} emp</span>` : ""}
+        <textarea id="msg-${l.id}" data-edit="${l.id}">${esc(msg)}</textarea>
+        <div id="cnt-${l.id}" class="${l.stage === "new" && msg.length > 300 ? "warn" : "muted"}">${msg.length}${l.stage === "new" ? "/300" : ""} characters${/\[[A-Z ]+\]/.test(msg) ? ` · <span class="warn">fill the [PLACEHOLDERS] in Settings</span>` : ""}</div>
         <div class="row">
           <button class="btn secondary" data-act="copy" data-id="${l.id}">Copy</button>
-          <a class="btn secondary" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Profile kholo</a>
-          <button class="btn ok" data-act="sent" data-id="${l.id}">Bhej diya ✓</button>
-          ${l.stage !== "new" ? `<button class="btn secondary" data-act="replied" data-id="${l.id}">Reply aaya</button>` : ""}
+          <a class="btn secondary" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Open profile</a>
+          <button class="btn ok" data-act="sent" data-id="${l.id}">Sent ✓</button>
+          ${edited ? `<button class="btn secondary" data-act="reset-msg" data-id="${l.id}">Reset to template</button>` : ""}
+          ${l.stage !== "new" ? `<button class="btn secondary" data-act="reply" data-id="${l.id}">They replied</button>` : ""}
+          <button class="btn secondary" data-act="skip" data-id="${l.id}">Skip 1 day</button>
         </div></div>`;
     });
     h += `</div>`;
   });
 
   if (pending.length) {
-    h += `<div class="card"><h3 style="margin-top:0">Pending connection requests</h3>
-      <p class="muted">Jinki request accept ho gayi, unke aage "Accept hua" dabao. Wo turant aaj ke tasks mein aa jayenge.</p><table>`;
+    h += `<div class="card"><h3>Pending connection requests</h3>
+      <p class="muted">When someone accepts your request, click "Accepted". They'll move straight into today's tasks.</p><table>`;
     pending.forEach(l => {
-      const old = daysBetween(l.lastDate, t) >= 14;
-      h += `<tr><td><b>${esc(l.name)}</b> – ${esc(l.company)}<div class="muted">${REGIONS[l.country].label} · bheji: ${l.lastDate}</div>
-        ${old ? `<div class="warn">14+ din se pending hai, LinkedIn par withdraw kar do</div>` : ""}</td>
-        <td style="text-align:right"><button class="btn ok" data-act="accepted" data-id="${l.id}">Accept hua</button></td></tr>`;
+      const old = daysBetween(l.lastDate, todayStr()) >= 14;
+      h += `<tr><td><b>${esc(l.name)}</b> – ${esc(l.company)}<div class="muted">${REGIONS[l.country]?.label || ""} · sent: ${l.lastDate}${l.account ? " · " + esc(accName(l.account)) : ""}</div>
+        ${old ? `<div class="warn">Pending 14+ days – withdraw it on LinkedIn</div>` : ""}</td>
+        <td style="text-align:right;white-space:nowrap"><a class="btn secondary sm" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Profile</a>
+        <button class="btn ok sm" data-act="accepted" data-id="${l.id}">Accepted</button></td></tr>`;
     });
     h += `</table></div>`;
   }
   $("#today").innerHTML = h;
 }
 
+/* ---------- Render: Find ---------- */
+function updateSearch() {
+  const titles = $("#q-titles").value.split(",").map(s => s.trim()).filter(Boolean);
+  const ind = $("#q-industry").value.trim(), loc = $("#q-location").value.trim();
+  const tPart = titles.length ? "(" + titles.map(t => `"${t}"`).join(" OR ") + ")" : "";
+  const kw = [tPart, ind && `"${ind}"`, loc && `"${loc}"`].filter(Boolean).join(" ");
+  $("#q-li-people").href = "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent([titles.join(" OR "), ind, loc].filter(Boolean).join(" "));
+  $("#q-li-company").href = "https://www.linkedin.com/search/results/companies/?keywords=" + encodeURIComponent([ind, loc].filter(Boolean).join(" "));
+  $("#q-google").href = "https://www.google.com/search?q=" + encodeURIComponent("site:linkedin.com/in " + kw);
+  $("#q-preview").textContent = "Google query: site:linkedin.com/in " + kw;
+}
+function renderCompanies() {
+  let h = `<tr><th>Company</th><th>Industry</th><th>Size</th><th>Country</th><th>Leads</th><th></th></tr>`;
+  companies.forEach(c => {
+    const n = leads.filter(l => (l.company || "").toLowerCase() === (c.company || "").toLowerCase()).length;
+    const people = "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(`${c.company} owner OR founder OR CEO OR director`);
+    h += `<tr><td><b>${esc(c.company)}</b><div class="muted">${c.website ? `<a href="${safeUrl(c.website)}" target="_blank" rel="noopener">${esc(c.website)}</a>` : ""}
+      ${c.linkedin ? ` · <a href="${safeUrl(c.linkedin)}" target="_blank" rel="noopener">LinkedIn page</a>` : ""}</div>${c.notes ? `<div class="muted">${esc(c.notes)}</div>` : ""}</td>
+      <td>${esc(c.industry)}</td><td>${esc(c.companySize)}</td><td>${REGIONS[c.country]?.label || esc(c.country)}</td><td>${n}</td>
+      <td style="white-space:nowrap"><a class="btn secondary sm" href="${people}" target="_blank" rel="noopener">Find people</a>
+      <button class="btn sm" data-act="co-lead" data-id="${c.id}">Add lead</button>
+      <button class="btn bad sm" data-act="co-del" data-id="${c.id}">✕</button></td></tr>`;
+  });
+  if (!companies.length) h += `<tr><td colspan="6" class="muted">No companies yet. Add target companies here, or import a CSV.</td></tr>`;
+  $("#co-table").innerHTML = h;
+}
+
 /* ---------- Render: Leads ---------- */
 function renderLeads() {
-  const f = $("#filter-stage").value;
-  const list = leads.filter(l => !f || l.stage === f).slice().reverse();
-  let h = `<tr><th>Name</th><th>Country</th><th>Stage</th><th>Last action</th><th></th></tr>`;
+  const f = $("#filter-stage").value, fc = $("#filter-country").value, q = $("#lead-search").value.toLowerCase().trim();
+  const list = leads.filter(l => (!f || l.stage === f) && (!fc || l.country === fc) &&
+    (!q || (l.name + " " + l.company + " " + l.industry).toLowerCase().includes(q))).slice().reverse();
+  let h = `<tr><th>Name</th><th>Company</th><th>Country</th><th>Stage</th><th>Last action</th><th></th></tr>`;
   list.forEach(l => {
-    h += `<tr><td><b>${esc(l.name)}</b><div class="muted">${esc(l.company)} · ${esc(l.industry)}</div></td>
+    h += `<tr><td><b><a href="#" data-act="open" data-id="${l.id}">${esc(l.name)}</a></b><div class="muted">${esc(l.title)}</div></td>
+      <td>${esc(l.company)}<div class="muted">${esc(l.industry)}${l.companySize ? " · " + esc(l.companySize) + " emp" : ""}</div></td>
       <td>${REGIONS[l.country]?.label || esc(l.country)}</td>
       <td><select data-act="stage" data-id="${l.id}">${STAGES.map(s => `<option value="${s}" ${s === l.stage ? "selected" : ""}>${STAGE_LABEL[s]}</option>`).join("")}</select></td>
       <td>${l.lastDate}</td>
-      <td><a href="${safeUrl(l.url)}" target="_blank" rel="noopener">Profile</a> · <a href="#" data-act="del" data-id="${l.id}">Delete</a></td></tr>`;
+      <td style="white-space:nowrap"><a href="${safeUrl(l.url)}" target="_blank" rel="noopener">Profile</a> · <a href="#" data-act="open" data-id="${l.id}">Edit</a></td></tr>`;
   });
-  if (!list.length) h += `<tr><td colspan="5" class="muted">Koi lead nahi.</td></tr>`;
+  if (!list.length) h += `<tr><td colspan="6" class="muted">No leads.</td></tr>`;
   $("#leads-table").innerHTML = h;
+}
+
+/* ---------- Render: Replies ---------- */
+function renderReplies() {
+  const list = leads.filter(l => REPLIED.includes(l.stage)).sort((a, b) => (b.replyDate || b.lastDate).localeCompare(a.replyDate || a.lastDate));
+  const open = list.filter(l => ["replied", "call_booked"].includes(l.stage));
+  const cnt = leads.filter(l => l.stage === "replied").length;
+  $("#reply-count").textContent = cnt; $("#reply-count").classList.toggle("hidden", !cnt);
+  let h = `<div class="card"><div class="grid">
+    <div><div class="stat">${list.length}</div><div class="muted">Total replies</div></div>
+    <div><div class="stat">${leads.filter(l => l.stage === "replied").length}</div><div class="muted">Waiting for your answer</div></div>
+    <div><div class="stat">${leads.filter(l => l.stage === "call_booked").length}</div><div class="muted">Calls booked</div></div>
+    <div><div class="stat">${leads.filter(l => l.stage === "client").length}</div><div class="muted">Clients</div></div>
+  </div></div>`;
+  if (!list.length) h += `<div class="card">No replies yet. When someone replies on LinkedIn, click "They replied" on their task (or open the lead) and paste their reply.</div>`;
+  const section = (title, arr) => {
+    if (!arr.length) return "";
+    let s = `<div class="card"><h3>${title}</h3>`;
+    arr.forEach(l => {
+      const v = varsFor(l);
+      s += `<div class="task"><div class="head"><div><b><a href="#" data-act="open" data-id="${l.id}">${esc(l.name)}</a></b> – ${esc(l.title ? l.title + ", " : "")}${esc(l.company)}
+        <div class="muted">${REGIONS[l.country]?.label || ""}${l.replyDate ? " · replied " + esc(l.replyDate) : ""}${l.account ? " · via " + esc(accName(l.account)) : ""}</div></div>
+        <select data-act="stage" data-id="${l.id}" style="width:auto">${REPLIED.map(st => `<option value="${st}" ${st === l.stage ? "selected" : ""}>${STAGE_LABEL[st]}</option>`).join("")}</select></div>
+        ${l.reply ? `<div class="reply-box">${esc(l.reply)}</div>` : `<div class="muted">No reply text saved.</div>`}
+        <div class="muted">Next step: ${esc(l.nextStep || "–")}${l.followUp ? " · follow-up " + esc(l.followUp) : ""}</div>
+        ${["replied", "call_booked"].includes(l.stage) ? `<div class="row"><select data-rtpl="${l.id}" style="width:auto"><option value="">Answer with template…</option>
+          ${Object.keys(replyTpl).map(k => `<option>${esc(k)}</option>`).join("")}</select></div>
+          <textarea id="ans-${l.id}" class="hidden" style="margin-top:8px"></textarea>` : ""}
+        <div class="row"><button class="btn secondary sm" data-act="open" data-id="${l.id}">Open lead / log reply</button>
+          <button class="btn secondary sm hidden" id="ans-copy-${l.id}" data-act="copy-ans" data-id="${l.id}">Copy answer</button>
+          <a class="btn secondary sm" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Open profile</a></div></div>`;
+    });
+    return s + `</div>`;
+  };
+  h += section("Needs your answer / active", open);
+  h += section("Closed", list.filter(l => !open.includes(l)));
+  $("#replies").innerHTML = h;
+}
+
+/* ---------- Render: Templates ---------- */
+let tplSet = "default";
+function renderTemplates() {
+  const sets = Object.keys(templates);
+  if (!templates[tplSet]) tplSet = "default";
+  $("#tpl-set").innerHTML = sets.map(s => `<option value="${esc(s)}" ${s === tplSet ? "selected" : ""}>${s === "default" ? "Default (all industries)" : "Industry: " + esc(s)}</option>`).join("");
+  $("#tpl-del-set").classList.toggle("hidden", tplSet === "default");
+  $("#tpl-reset").classList.toggle("hidden", tplSet !== "default");
+  $("#tpl-fields").innerHTML = Object.keys(SEQ).map(k => `<div style="margin-top:12px"><label><b>${SEQ[k].label}</b>${k === "new" ? " (max 300 characters)" : ""} – sent ${SEQ[k].gap ? SEQ[k].gap + " days after previous step" : k === "new" ? "first" : "right after they accept"}</label>
+    <textarea data-tpl="${k}" placeholder="${tplSet === "default" ? "" : "Empty = use Default"}">${esc(templates[tplSet][k] || "")}</textarea></div>`).join("");
+  $("#rtpl-fields").innerHTML = Object.keys(replyTpl).map(k => `<div style="margin-top:12px"><label><b>${esc(k)}</b></label><textarea data-rtpl-edit="${esc(k)}">${esc(replyTpl[k])}</textarea></div>`).join("");
+  $("#industry-list").innerHTML = [...new Set([...sets.filter(s => s !== "default"), ...leads.map(l => l.industry)])].filter(Boolean).map(i => `<option value="${esc(i)}">`).join("");
 }
 
 /* ---------- Render: Stats ---------- */
 function renderStats() {
   const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
-  const calc = arr => {
-    const sent = arr.filter(l => l.stage !== "new").length;
-    const acc = arr.filter(l => ACCEPTED.includes(l.stage)).length;
-    const rep = arr.filter(l => REPLIED.includes(l.stage)).length;
-    const calls = arr.filter(l => ["call_booked", "client"].includes(l.stage)).length;
-    const clients = arr.filter(l => l.stage === "client").length;
-    return { total: arr.length, sent, acc, rep, calls, clients };
-  };
+  const calc = arr => ({
+    total: arr.length, sent: arr.filter(l => l.stage !== "new").length,
+    acc: arr.filter(l => ACCEPTED.includes(l.stage)).length, rep: arr.filter(l => REPLIED.includes(l.stage)).length,
+    calls: arr.filter(l => ["call_booked", "client"].includes(l.stage)).length, clients: arr.filter(l => l.stage === "client").length
+  });
   const a = calc(leads);
   let h = `<div class="card"><div class="grid">
     <div><div class="stat">${a.total}</div><div class="muted">Total leads</div></div>
-    <div><div class="stat">${a.sent}</div><div class="muted">Requests bheji</div></div>
+    <div><div class="stat">${a.sent}</div><div class="muted">Requests sent</div></div>
     <div><div class="stat">${pct(a.acc, a.sent)}</div><div class="muted">Accept rate (target 30%+)</div></div>
     <div><div class="stat">${pct(a.rep, a.acc)}</div><div class="muted">Reply rate (target 10%+)</div></div>
     <div><div class="stat">${a.calls}</div><div class="muted">Calls booked</div></div>
     <div><div class="stat">${a.clients}</div><div class="muted">Clients</div></div>
   </div></div>`;
   const tips = [];
-  if (a.sent >= 30 && a.acc / a.sent < 0.3) tips.push("Accept rate kam hai: profile headline, photo aur targeting improve karo.");
-  if (a.acc >= 20 && a.rep / a.acc < 0.1) tips.push("Reply rate kam hai: Settings mein problem aur result ko zyada specific banao.");
+  if (a.sent >= 30 && a.acc / a.sent < 0.3) tips.push("Low accept rate: improve your profile headline and photo, and target more precisely.");
+  if (a.acc >= 20 && a.rep / a.acc < 0.1) tips.push("Low reply rate: add a personal hook for each lead and make the pain point and result more specific.");
   if (tips.length) h += `<div class="card banner">${tips.join("<br>")}</div>`;
-
-  h += `<div class="card"><h3 style="margin-top:0">Country-wise</h3><table>
-    <tr><th>Country</th><th>Leads</th><th>Accept rate</th><th>Reply rate</th><th>Calls</th><th>Clients</th></tr>`;
-  Object.keys(REGIONS).forEach(c => {
-    const s = calc(leads.filter(l => l.country === c));
-    if (s.total) h += `<tr><td>${REGIONS[c].label}</td><td>${s.total}</td><td>${pct(s.acc, s.sent)}</td><td>${pct(s.rep, s.acc)}</td><td>${s.calls}</td><td>${s.clients}</td></tr>`;
-  });
-  h += `</table></div><div class="card"><h3 style="margin-top:0">Pichhle 7 din</h3><table><tr><th>Date</th><th>Requests</th><th>Messages</th></tr>`;
+  const table = (title, keyFn, labelFn) => {
+    const keys = [...new Set(leads.map(keyFn))].filter(k => k !== undefined);
+    if (!keys.length) return "";
+    let s = `<div class="card"><h3>${title}</h3><div style="overflow-x:auto"><table><tr><th></th><th>Leads</th><th>Accept rate</th><th>Reply rate</th><th>Calls</th><th>Clients</th></tr>`;
+    keys.forEach(k => { const x = calc(leads.filter(l => keyFn(l) === k));
+      s += `<tr><td>${esc(labelFn(k))}</td><td>${x.total}</td><td>${pct(x.acc, x.sent)}</td><td>${pct(x.rep, x.acc)}</td><td>${x.calls}</td><td>${x.clients}</td></tr>`; });
+    return s + `</table></div></div>`;
+  };
+  h += table("By country", l => l.country, k => REGIONS[k]?.label || k);
+  h += table("By industry", l => (l.industry || "").toLowerCase(), k => k || "(none)");
+  if (accounts.length) h += table("By account", l => l.account || "", k => accName(k) || "(not assigned)");
+  h += `<div class="card"><h3>Last 7 days</h3><table><tr><th>Date</th><th>Requests</th><th>Messages</th></tr>`;
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toLocaleDateString("en-CA");
     h += `<tr><td>${ds}</td><td>${log.filter(x => x.d === ds && x.t === "request").length}</td><td>${log.filter(x => x.d === ds && x.t === "message").length}</td></tr>`;
@@ -303,68 +582,151 @@ function renderStats() {
   $("#stats").innerHTML = h + `</table></div>`;
 }
 
-const renderAll = () => { renderToday(); renderLeads(); renderStats(); };
+/* ---------- Render: Settings ---------- */
+function renderAccounts() {
+  $("#acc-list").innerHTML = accounts.length ? `<table><tr><th>Account</th><th>Requests/day</th><th>Messages/day</th><th></th></tr>` +
+    accounts.map(a => `<tr><td><b>${esc(a.name)}</b><div class="muted">${a.url ? `<a href="${safeUrl(a.url)}" target="_blank" rel="noopener">${esc(a.url)}</a>` : ""}</div></td>
+      <td><input type="number" data-acc-req="${a.id}" value="${a.req}" style="width:90px"></td>
+      <td><input type="number" data-acc-msg="${a.id}" value="${a.msg}" style="width:90px"></td>
+      <td><button class="btn bad sm" data-act="acc-del" data-id="${a.id}">Remove</button></td></tr>`).join("") + `</table>`
+    : `<p class="muted">No account added yet.</p>`;
+}
+
+const renderAll = () => { renderToday(); renderCompanies(); renderLeads(); renderReplies(); renderStats(); renderAccounts(); };
+
+/* ---------- Lead dialog ---------- */
+let dlgLead = null;
+function openLead(id) {
+  const l = leads.find(x => x.id === id); if (!l) return; dlgLead = l;
+  const f = (k, label, extra = "") => `<div ${extra}><label>${label}</label><input data-f="${k}" value="${esc(l[k] || "")}"></div>`;
+  $("#lead-dlg-body").innerHTML = `<div class="head"><h3 style="margin:0">${esc(l.name)}</h3><a class="btn secondary sm" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Open LinkedIn profile</a></div>
+    <div class="grid" style="margin-top:12px">
+      ${f("name", "Full name")}${f("title", "Job title")}${f("company", "Company")}${f("industry", "Industry")}
+      <div><label>Company size</label><select data-f="companySize">${SIZES.map(s => `<option value="${s}" ${s === l.companySize ? "selected" : ""}>${s || "–"}</option>`).join("")}</select></div>
+      <div><label>Country</label><select data-f="country">${Object.entries(REGIONS).map(([k, r]) => `<option value="${k}" ${k === l.country ? "selected" : ""}>${r.label}</option>`).join("")}</select></div>
+      ${f("url", "LinkedIn URL")}${f("website", "Website")}
+      <div><label>Stage</label><select data-f="stage">${STAGES.map(s => `<option value="${s}" ${s === l.stage ? "selected" : ""}>${STAGE_LABEL[s]}</option>`).join("")}</select></div>
+      <div><label>LinkedIn account</label><select data-f="account"><option value="">–</option>${accounts.map(a => `<option value="${a.id}" ${a.id === l.account ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select></div>
+      ${f("hook", "Personal hook", 'class="span2"')}${f("painPoint", "Pain point", 'class="span2"')}
+    </div>
+    <h3 style="margin-top:18px">Reply</h3>
+    <div class="grid">
+      <div class="span2"><label>Their reply (paste from LinkedIn)</label><textarea data-f="reply">${esc(l.reply || "")}</textarea></div>
+      <div><label>Next step</label><input data-f="nextStep" value="${esc(l.nextStep || "")}" placeholder="e.g. send proposal"></div>
+      <div><label>Follow-up date</label><input type="date" data-f="followUp" value="${esc(l.followUp || "")}"></div>
+    </div>
+    <h3 style="margin-top:18px">Notes & history</h3>
+    <div class="row" style="margin-top:0"><input id="dlg-note" placeholder="Add a note…"><button class="btn secondary" id="dlg-add-note">Add note</button></div>
+    <div class="timeline" style="margin-top:8px">${l.history.length ? l.history.slice().reverse().map(x => `<div><span class="muted">${esc(x.d)}</span> – ${esc(x.t)}</div>`).join("") : `<span class="muted">No history yet.</span>`}</div>`;
+  $("#dlg-add-note").onclick = () => { const t = $("#dlg-note").value.trim(); if (!t) return; addHistory(l, "Note: " + t); save(); openLead(l.id); };
+  if (!$("#lead-dlg").open) $("#lead-dlg").showModal();
+}
+$("#dlg-close").onclick = () => $("#lead-dlg").close();
+$("#dlg-save").onclick = () => {
+  const l = dlgLead; if (!l) return;
+  const before = { stage: l.stage, reply: l.reply || "" };
+  $$("#lead-dlg [data-f]").forEach(el => l[el.dataset.f] = el.value.trim());
+  if (l.reply && l.reply !== before.reply) { l.replyDate = todayStr(); addHistory(l, "Reply logged: " + l.reply.slice(0, 120)); if (!REPLIED.includes(l.stage)) l.stage = "replied"; }
+  if (l.stage !== before.stage) { addHistory(l, `Stage: ${STAGE_LABEL[before.stage]} → ${STAGE_LABEL[l.stage]}`); l.lastDate = todayStr(); }
+  save(); $("#lead-dlg").close(); renderAll();
+};
+$("#dlg-delete").onclick = () => {
+  if (!dlgLead || !confirm(`Delete ${dlgLead.name}?`)) return;
+  leads = leads.filter(x => x !== dlgLead); save(); $("#lead-dlg").close(); renderAll();
+};
 
 /* ---------- Events ---------- */
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
-  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
-  ["today", "leads", "stats", "settings"].forEach(t => $("#" + t).classList.toggle("hidden", t !== b.dataset.tab));
-  renderAll();
+const TABS = ["today", "find", "leads", "replies", "templates", "stats", "settings"];
+$$("#nav button").forEach(b => b.onclick = () => {
+  $$("#nav button").forEach(x => x.classList.toggle("active", x === b));
+  TABS.forEach(t => $("#" + t).classList.toggle("hidden", t !== b.dataset.tab));
+  if (b.dataset.tab === "templates") renderTemplates(); else renderAll();
 });
 
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]");
   if (!el || el.tagName === "SELECT") return;
-  const l = leads.find(x => x.id === el.dataset.id); if (!l) return;
-  const act = el.dataset.act;
-  if (act === "copy") {
-    navigator.clipboard.writeText($("#msg-" + l.id).value).then(() => { el.textContent = "Copied!"; setTimeout(() => el.textContent = "Copy", 1500); });
-  } else if (act === "sent") {
-    if (l.stage === "new") {
-      const n = log.filter(x => x.d === todayStr() && x.t === "request").length;
-      if (n >= 20 && !confirm("Aaj 20 requests ho chuki hain. Account safety ke liye baaki kal bhejna better hai. Phir bhi mark karein?")) return;
-    }
-    addLog(l.stage === "new" ? "request" : "message");
-    l.stage = SEQ[l.stage].next; l.lastDate = todayStr(); save(); renderAll();
-  } else if (act === "replied" || act === "accepted") {
-    l.stage = act; l.lastDate = todayStr(); save(); renderAll();
-  } else if (act === "del") {
-    e.preventDefault();
-    if (confirm(`${l.name} ko delete karna hai?`)) { leads = leads.filter(x => x !== l); save(); renderAll(); }
+  const act = el.dataset.act, id = el.dataset.id;
+  if (act === "co-del") { if (confirm("Remove this company?")) { companies = companies.filter(c => c.id !== id); saveCompanies(); renderCompanies(); } return; }
+  if (act === "co-lead") {
+    const c = companies.find(x => x.id === id); if (!c) return;
+    $("#f-company").value = c.company || ""; $("#f-industry").value = c.industry || ""; $("#f-website").value = c.website || "";
+    $("#f-companySize").value = SIZES.includes(c.companySize) ? c.companySize : ""; if (REGIONS[c.country]) $("#f-country").value = c.country;
+    $("#f-name").focus(); $("#f-name").scrollIntoView({ behavior: "smooth", block: "center" }); return;
   }
+  if (act === "acc-del") { if (confirm("Remove this account?")) { accounts = accounts.filter(a => a.id !== id); put("lf_accounts", accounts); renderAll(); } return; }
+  const l = leads.find(x => x.id === id); if (!l) return;
+  if (act === "open") { e.preventDefault(); openLead(l.id); }
+  else if (act === "copy") {
+    navigator.clipboard.writeText($("#msg-" + l.id).value).then(() => { el.textContent = "Copied!"; setTimeout(() => el.textContent = "Copy", 1500); });
+  } else if (act === "copy-ans") {
+    navigator.clipboard.writeText($("#ans-" + l.id).value).then(() => { el.textContent = "Copied!"; setTimeout(() => el.textContent = "Copy answer", 1500); });
+  } else if (act === "sent") {
+    const kind = SEQ[l.stage].kind, acc = l.account || activeAccount, lim = limitsFor(acc);
+    const n = countToday(kind, acc), max = kind === "request" ? lim.req : lim.msg;
+    if (n >= max && !confirm(`You've reached today's limit (${max} ${kind}s) for this account. For account safety, send the rest tomorrow. Mark as sent anyway?`)) return;
+    const text = $("#msg-" + l.id).value;
+    if (!l.account && acc) l.account = acc;
+    addLog(kind, acc); addHistory(l, `Sent ${SEQ[l.stage].label}${acc ? " (" + accName(acc) + ")" : ""}: ${text.slice(0, 160)}`);
+    delete l.custom[l.stage]; l.stage = SEQ[l.stage].next; l.lastDate = todayStr(); save(); renderAll();
+  } else if (act === "reset-msg") { delete l.custom[l.stage]; save(); renderToday(); }
+  else if (act === "skip") { const d = new Date(Date.parse(l.lastDate) + 864e5); l.lastDate = d.toISOString().slice(0, 10); save(); renderToday(); }
+  else if (act === "accepted") { l.stage = "accepted"; l.lastDate = todayStr(); addHistory(l, "Connection accepted"); save(); renderAll(); }
+  else if (act === "reply") { l.stage = "replied"; l.lastDate = todayStr(); l.replyDate = todayStr(); addHistory(l, "Marked as replied"); save(); renderAll(); openLead(l.id); }
 });
 
 document.addEventListener("change", e => {
-  if (e.target.dataset.act !== "stage") return;
-  const l = leads.find(x => x.id === e.target.dataset.id);
-  l.stage = e.target.value; l.lastDate = todayStr(); save(); renderAll();
+  const t = e.target;
+  if (t.id === "acc-switch") { activeAccount = t.value; put("lf_active_acc", activeAccount); renderToday(); return; }
+  if (t.dataset.rtpl !== undefined) {
+    const l = leads.find(x => x.id === t.dataset.rtpl), box = $("#ans-" + t.dataset.rtpl);
+    if (!t.value) { box.classList.add("hidden"); $("#ans-copy-" + l.id).classList.add("hidden"); return; }
+    box.value = fill(replyTpl[t.value], varsFor(l)); box.classList.remove("hidden"); $("#ans-copy-" + l.id).classList.remove("hidden"); return;
+  }
+  if (t.dataset.accReq || t.dataset.accMsg) {
+    const a = accounts.find(x => x.id === (t.dataset.accReq || t.dataset.accMsg));
+    if (a) { if (t.dataset.accReq) a.req = +t.value || 25; else a.msg = +t.value || 50; put("lf_accounts", accounts); }
+    return;
+  }
+  if (t.dataset.act !== "stage") return;
+  const l = leads.find(x => x.id === t.dataset.id); if (!l) return;
+  addHistory(l, `Stage: ${STAGE_LABEL[l.stage]} → ${STAGE_LABEL[t.value]}`);
+  l.stage = t.value; l.lastDate = todayStr(); save(); renderAll();
 });
 
 document.addEventListener("input", e => {
-  if (e.target.dataset.count !== "1") return;
-  const c = $("#cnt-" + e.target.dataset.id), n = e.target.value.length;
-  c.textContent = `${n}/300 characters`; c.className = n > 300 ? "warn" : "muted";
+  const id = e.target.dataset.edit; if (!id) return;
+  const l = leads.find(x => x.id === id); if (!l) return;
+  l.custom[l.stage] = e.target.value; save();
+  const c = $("#cnt-" + id), n = e.target.value.length;
+  c.textContent = `${n}${l.stage === "new" ? "/300" : ""} characters (edited – saved)`; c.className = l.stage === "new" && n > 300 ? "warn" : "muted";
 });
+
+["#q-titles", "#q-industry", "#q-location"].forEach(s => $(s).addEventListener("input", updateSearch));
 
 $("#add-btn").onclick = () => {
   const g = id => $("#f-" + id).value.trim();
-  if (!g("name") || !g("company") || !g("industry")) return alert("Name, company aur industry zaroori hain.");
-  if (g("url") && leads.some(l => l.url === g("url"))) return alert("Ye lead pehle se hai.");
-  leads.push({ id: uid(), name: g("name"), company: g("company"), industry: g("industry"), country: g("country"),
-               url: g("url"), stage: "new", lastDate: todayStr(), notes: "" });
-  save(); ["name", "company", "industry", "url"].forEach(i => $("#f-" + i).value = "");
-  $("#add-msg").textContent = "Lead add ho gaya ✓"; setTimeout(() => $("#add-msg").textContent = "", 2000);
+  if (!g("name") || !g("company") || !g("industry")) return alert("Name, company and industry are required.");
+  if (g("url") && leads.some(l => l.url === g("url"))) return alert("This lead already exists.");
+  const l = { id: uid(), name: g("name"), title: g("title"), company: g("company"), industry: g("industry"), companySize: g("companySize"),
+    country: g("country"), url: g("url"), website: g("website"), hook: g("hook"), painPoint: g("painPoint"),
+    stage: "new", lastDate: todayStr(), notes: "", account: activeAccount, history: [], custom: {} };
+  addHistory(l, "Lead added"); leads.push(l); save();
+  ["name", "title", "url", "hook", "painPoint"].forEach(i => $("#f-" + i).value = "");
+  flash("#add-msg", "Lead added ✓ (company details kept for the next person)");
   renderAll();
 };
 
-const FIELDS = ["name", "company", "industry", "country", "url", "stage", "lastDate", "notes"];
-$("#export-btn").onclick = () => {
-  const csv = [FIELDS.join(","), ...leads.map(l => FIELDS.map(f => `"${String(l[f] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-  a.download = `leads-${todayStr()}.csv`; a.click();
+$("#co-add-btn").onclick = () => {
+  const company = prompt("Company name"); if (!company) return;
+  const industry = prompt("Industry / category", $("#q-industry").value) || "";
+  const country = (prompt("Country code (" + Object.keys(REGIONS).join(", ") + ")", "UAE") || "").toUpperCase();
+  const companySize = prompt("Company size (" + SIZES.filter(Boolean).join(", ") + ")", "11-50") || "";
+  const website = prompt("Website (optional)") || "";
+  companies.push({ id: uid(), company, industry, country, companySize, website, linkedin: "", notes: "" }); saveCompanies(); renderCompanies();
 };
 
+/* ---------- CSV ---------- */
 function parseCSV(text) {
   const rows = []; let row = [], cur = "", q = false;
   for (let i = 0; i < text.length; i++) {
@@ -376,40 +738,95 @@ function parseCSV(text) {
     else if (c !== "\r") cur += c;
   }
   if (cur || row.length) { row.push(cur); rows.push(row); }
-  return rows;
+  return rows.filter(r => r.some(x => x.trim()));
 }
+const csvObjects = async file => { const rows = parseCSV(await file.text()); const head = rows.shift().map(s => s.trim());
+  return rows.map(r => Object.fromEntries(head.map((k, i) => [k, (r[i] || "").trim()]))); };
+const download = (name, text, type) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); };
+
+const FIELDS = ["name", "title", "company", "industry", "companySize", "country", "url", "website", "hook", "painPoint", "stage", "lastDate", "reply", "nextStep", "followUp"];
+$("#export-btn").onclick = () => download(`leads-${todayStr()}.csv`,
+  [FIELDS.join(","), ...leads.map(l => FIELDS.map(f => `"${String(l[f] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n"), "text/csv");
 
 $("#import-file").onchange = async e => {
   const file = e.target.files[0]; if (!file) return;
-  const rows = parseCSV(await file.text());
-  const head = rows.shift().map(s => s.trim());
   let added = 0, skipped = 0;
-  rows.forEach(r => {
-    const o = Object.fromEntries(head.map((k, i) => [k, (r[i] || "").trim()]));
+  (await csvObjects(file)).forEach(o => {
     const country = (o.country || "").toUpperCase();
     if (!o.name || !o.company || !REGIONS[country] || (o.url && leads.some(l => l.url === o.url))) { skipped++; return; }
-    leads.push({ id: uid(), name: o.name, company: o.company, industry: o.industry || "your industry", country, url: o.url || "",
-                 stage: STAGES.includes(o.stage) ? o.stage : "new", lastDate: o.lastDate || todayStr(), notes: o.notes || "" });
-    added++;
+    const l = { id: uid(), name: o.name, title: o.title || "", company: o.company, industry: o.industry || "your industry", companySize: o.companySize || "",
+      country, url: o.url || "", website: o.website || "", hook: o.hook || "", painPoint: o.painPoint || "",
+      stage: STAGES.includes(o.stage) ? o.stage : "new", lastDate: o.lastDate || todayStr(), reply: o.reply || "", nextStep: o.nextStep || "",
+      followUp: o.followUp || "", notes: "", account: activeAccount, history: [], custom: {} };
+    addHistory(l, "Imported from CSV"); leads.push(l); added++;
   });
   save(); renderAll(); e.target.value = "";
-  alert(`${added} leads add hue, ${skipped} skip hue (missing data, galat country ya duplicate).`);
+  alert(`${added} leads added, ${skipped} skipped (missing data, wrong country code or duplicate).`);
 };
 
+$("#co-import").onchange = async e => {
+  const file = e.target.files[0]; if (!file) return;
+  let added = 0;
+  (await csvObjects(file)).forEach(o => {
+    if (!o.company || companies.some(c => c.company.toLowerCase() === o.company.toLowerCase())) return;
+    companies.push({ id: uid(), company: o.company, website: o.website || "", industry: o.industry || "", companySize: o.companySize || "",
+      country: (o.country || "").toUpperCase(), linkedin: o.linkedin || "", notes: o.notes || "" }); added++;
+  });
+  saveCompanies(); renderCompanies(); e.target.value = ""; alert(`${added} companies added.`);
+};
+
+/* ---------- Templates events ---------- */
+$("#tpl-set").onchange = e => { tplSet = e.target.value; renderTemplates(); };
+$("#tpl-add-set").onclick = () => {
+  const k = $("#tpl-new-industry").value.toLowerCase().trim(); if (!k) return;
+  templates[k] ??= {}; tplSet = k; put("lf_templates", templates); $("#tpl-new-industry").value = ""; renderTemplates();
+};
+$("#tpl-save").onclick = () => {
+  $$("[data-tpl]").forEach(t => { const v = t.value.trim(); if (v) templates[tplSet][t.dataset.tpl] = v; else delete templates[tplSet][t.dataset.tpl]; });
+  Object.keys(DEFAULT_TPL).forEach(k => templates.default[k] ||= DEFAULT_TPL[k]);
+  put("lf_templates", templates); flash("#tpl-msg", "Saved ✓"); renderTemplates(); renderToday();
+};
+$("#tpl-del-set").onclick = () => { if (tplSet !== "default" && confirm("Delete this industry set?")) { delete templates[tplSet]; tplSet = "default"; put("lf_templates", templates); renderTemplates(); } };
+$("#tpl-reset").onclick = () => { if (confirm("Reset Default templates to the original text?")) { templates.default = { ...DEFAULT_TPL }; put("lf_templates", templates); renderTemplates(); renderToday(); } };
+$("#rtpl-save").onclick = () => { $$("[data-rtpl-edit]").forEach(t => replyTpl[t.dataset.rtplEdit] = t.value.trim()); put("lf_reply_tpl", replyTpl); flash("#rtpl-msg", "Saved ✓"); };
+
+/* ---------- Settings events ---------- */
 $("#save-settings").onclick = () => {
   SETTING_FIELDS.forEach(([k]) => settings[k] = $("#s-" + k).value.trim());
-  localStorage.setItem("lf_settings", JSON.stringify(settings));
-  $("#save-msg").textContent = "Saved ✓"; setTimeout(() => $("#save-msg").textContent = "", 2000);
-  renderAll();
+  put("lf_settings", settings); flash("#save-msg", "Saved ✓"); renderAll();
+};
+$("#acc-add").onclick = () => {
+  const name = $("#acc-name").value.trim(); if (!name) return alert("Enter an account name.");
+  const a = { id: uid(), name, url: $("#acc-url").value.trim(), req: +$("#acc-req").value || 25, msg: +$("#acc-msg").value || 50 };
+  accounts.push(a); put("lf_accounts", accounts);
+  if (!activeAccount) { activeAccount = a.id; put("lf_active_acc", activeAccount); leads.forEach(l => l.account ||= a.id); save(); }
+  $("#acc-name").value = ""; $("#acc-url").value = ""; renderAll();
+};
+$("#backup-btn").onclick = () => download(`linkedin-funnel-backup-${todayStr()}.json`,
+  JSON.stringify({ leads, settings, log, accounts, templates, replyTpl, companies, activeAccount }, null, 1), "application/json");
+$("#restore-file").onchange = async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (!confirm("Replace all current data with this backup?")) return;
+    [["lf_leads", d.leads], ["lf_settings", d.settings], ["lf_log", d.log], ["lf_accounts", d.accounts], ["lf_templates", d.templates],
+     ["lf_reply_tpl", d.replyTpl], ["lf_companies", d.companies], ["lf_active_acc", d.activeAccount]].forEach(([k, v]) => v !== undefined && put(k, v));
+    location.reload();
+  } catch { alert("This is not a valid backup file."); }
 };
 
 /* ---------- Init ---------- */
-$("#f-country").innerHTML = Object.entries(REGIONS).map(([k, r]) => `<option value="${k}">${r.label}</option>`).join("");
-$("#filter-stage").innerHTML = `<option value="">Saare stages</option>` + STAGES.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join("");
-$("#filter-stage").onchange = renderLeads;
+const countryOpts = Object.entries(REGIONS).map(([k, r]) => `<option value="${k}">${r.label}</option>`).join("");
+$("#f-country").innerHTML = countryOpts;
+$("#f-companySize").innerHTML = SIZES.map(s => `<option value="${s}">${s ? s + " employees" : "–"}</option>`).join("");
+$("#filter-stage").innerHTML = `<option value="">All stages</option>` + STAGES.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join("");
+$("#filter-country").innerHTML = `<option value="">All countries</option>` + countryOpts;
+$("#filter-stage").onchange = renderLeads; $("#filter-country").onchange = renderLeads; $("#lead-search").oninput = renderLeads;
 $("#settings-grid").innerHTML = SETTING_FIELDS.map(([k, label, ph]) =>
   `<div><label>${label}</label><input id="s-${k}" placeholder="${esc(ph)}" value="${esc(settings[k] || "")}"></div>`).join("");
-renderAll();
+if (activeAccount && !accounts.some(a => a.id === activeAccount)) activeAccount = "";
+if (!activeAccount && accounts[0]) activeAccount = accounts[0].id;
+updateSearch(); renderTemplates(); renderAll();
 </script>
 </body>
 </html>
