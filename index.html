@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedIn Outreach Funnel</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--text:#1d2330;--muted:#6b7280;--accent:#0a66c2;--ok:#15803d;--warn:#b45309;--border:#e5e7eb}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--accent);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+header h1{margin:0;font-size:20px}
+nav button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:8px 14px;border-radius:6px;cursor:pointer;margin-left:6px;font-size:14px}
+nav button.active{background:#fff;color:var(--accent)}
+main{max-width:1100px;margin:24px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--border);border-radius:6px;font:inherit;background:#fff}
+textarea{min-height:90px;resize:vertical;margin-top:8px}
+.btn{display:inline-block;background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px;text-decoration:none}
+.btn.secondary{background:#eef2f7;color:var(--text)}
+.btn.ok{background:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.region-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.badge{font-size:12px;padding:3px 9px;border-radius:99px;background:#eef2f7;white-space:nowrap}
+.badge.live{background:#dcfce7;color:var(--ok)}
+.badge.weekend{background:#fef3c7;color:var(--warn)}
+.task{border-top:1px solid var(--border);padding:14px 0}
+.muted{color:var(--muted);font-size:13px}
+.warn{color:var(--warn);font-size:13px}
+.banner{background:#fef3c7;border-color:#fcd34d}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--border);vertical-align:top}
+td select{width:auto}
+.stat{font-size:28px;font-weight:700}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>LinkedIn Outreach Funnel</h1>
+  <nav>
+    <button data-tab="today" class="active">Aaj ke Tasks</button>
+    <button data-tab="leads">Leads</button>
+    <button data-tab="stats">Stats</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+</header>
+
+<main>
+  <section id="today"></section>
+
+  <section id="leads" class="hidden">
+    <div class="card">
+      <h3>Naya lead add karo</h3>
+      <div class="grid">
+        <div><label>Name *</label><input id="f-name"></div>
+        <div><label>Company *</label><input id="f-company"></div>
+        <div><label>Industry * (e.g. real estate)</label><input id="f-industry"></div>
+        <div><label>Country</label><select id="f-country"></select></div>
+        <div><label>LinkedIn profile URL</label><input id="f-url"></div>
+      </div>
+      <div class="row"><button class="btn" id="add-btn">Add Lead</button><span class="muted" id="add-msg"></span></div>
+    </div>
+    <div class="card">
+      <div class="region-head">
+        <h3 style="margin:0">Saare leads</h3>
+        <div class="row" style="margin:0">
+          <select id="filter-stage" style="width:auto"></select>
+          <button class="btn secondary" id="export-btn">Export CSV</button>
+          <label class="btn secondary" style="margin:0;color:var(--text)">Import CSV<input type="file" id="import-file" accept=".csv" class="hidden"></label>
+        </div>
+      </div>
+      <p class="muted">CSV columns: name, company, industry, country, url. Country codes: UAE, SAUDI, QATAR, UK, US_EAST, US_WEST, AU_EAST, AU_WEST</p>
+      <div style="overflow-x:auto"><table id="leads-table"></table></div>
+    </div>
+  </section>
+
+  <section id="stats" class="hidden"></section>
+
+  <section id="settings" class="hidden">
+    <div class="card">
+      <h3>Aapki details (messages mein auto-fill hongi)</h3>
+      <div class="grid" id="settings-grid"></div>
+      <div class="row"><button class="btn" id="save-settings">Save</button><span class="muted" id="save-msg"></span></div>
+      <p class="muted">Past client aur result bilkul sach likho. Data sirf isi browser mein save hota hai. Backup ke liye Leads tab se CSV export karte raho.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl = u => !u ? "#" : (/^https?:\/\//i.test(u) ? esc(u) : "https://" + esc(u));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const todayStr = () => new Date().toLocaleDateString("en-CA");
+const daysBetween = (a, b) => (Date.parse(b) - Date.parse(a)) / 864e5;
+
+/* ---------- Config ---------- */
+const REGIONS = {
+  UAE:     { tz:"Asia/Dubai",          weekend:["Sat","Sun"], style:"me", h:[9,11],  label:"UAE" },
+  SAUDI:   { tz:"Asia/Riyadh",         weekend:["Fri","Sat"], style:"me", h:[9,11],  label:"Saudi Arabia" },
+  QATAR:   { tz:"Asia/Qatar",          weekend:["Fri","Sat"], style:"me", h:[9,11],  label:"Qatar" },
+  UK:      { tz:"Europe/London",       weekend:["Sat","Sun"], style:"uk", h:[9,11],  label:"United Kingdom" },
+  US_EAST: { tz:"America/New_York",    weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"USA (East)" },
+  US_WEST: { tz:"America/Los_Angeles", weekend:["Sat","Sun"], style:"us", h:[9,11],  label:"USA (West)" },
+  AU_EAST: { tz:"Australia/Sydney",    weekend:["Sat","Sun"], style:"au", h:[13,15], label:"Australia (East)" },
+  AU_WEST: { tz:"Australia/Perth",     weekend:["Sat","Sun"], style:"au", h:[13,15], label:"Australia (Perth)" }
+};
+
+const STYLE = {
+  me: { hi:"Hello {name}, hope you are doing well.", cta:"Would you be open to a short call at a time that suits you?" },
+  uk: { hi:"Hi {name},", cta:"Would a quick 15-minute chat be useful at some point?" },
+  us: { hi:"Hi {name},", cta:"Open to a quick 15-min call this week?" },
+  au: { hi:"Hi {name},", cta:"Keen for a quick 15-min chat sometime this week?" }
+};
+
+const SEQ = {
+  new:      { next:"requested", gap:0, label:"Connection request",
+    tpl:"{hi} Came across {company} and liked what you're building in {industry}. I work with SMB owners in this space and would be glad to connect." },
+  accepted: { next:"msg1", gap:0, label:"Thank-you message",
+    tpl:"{hi} Thanks for connecting! Curious, what's the biggest challenge for {company} right now when it comes to {area}?" },
+  msg1:     { next:"msg2", gap:3, label:"Value message",
+    tpl:"Hi {name}, one pattern I keep seeing with {industry} businesses is {problem}. We recently helped {clientType} {result}. Happy to share the short checklist we used, if useful." },
+  msg2:     { next:"msg3", gap:5, label:"Call offer",
+    tpl:"Hi {name}, if {area} is a priority for {company} right now, I'd be happy to do a free 15-minute audit of your website, SEO and ads. {cta}" },
+  msg3:     { next:"closed_no_reply", gap:7, label:"Last follow-up",
+    tpl:"Hi {name}, I won't keep filling your inbox :) If {service} ever becomes a priority, just reply here. Wishing {company} continued success! – {myName}" }
+};
+
+const STAGE_LABEL = {
+  new:"Naya", requested:"Request bheji", accepted:"Accepted", msg1:"Thank-you bheja",
+  msg2:"Value msg bheja", msg3:"Call offer bheja", closed_no_reply:"No reply (closed)",
+  replied:"Reply aaya", call_booked:"Call booked", client:"Client 🎉", not_interested:"Not interested"
+};
+const STAGES = Object.keys(STAGE_LABEL);
+const REPLIED = ["replied","call_booked","client","not_interested"];
+const ACCEPTED = ["accepted","msg1","msg2","msg3","closed_no_reply", ...REPLIED];
+
+const SETTING_FIELDS = [
+  ["myName","Aapka naam","e.g. Sandeep"],
+  ["service","Aapki service","e.g. SEO, ads and website work"],
+  ["area","Kis area mein help (2-4 words)","e.g. getting more leads online"],
+  ["problem","Common problem","e.g. a website that gets traffic but very few leads"],
+  ["clientType","Past client (a + type + country) – REAL","e.g. a real estate agency in Dubai"],
+  ["result","Result jo diya (verb se shuru) – REAL","e.g. cut their cost per lead by 40% in 2 months"]
+];
+const DEFAULTS = {
+  myName:"", service:"SEO, ads and website work", area:"getting more leads online",
+  problem:"a website and ad spend that bring traffic but very few quality leads",
+  clientType:"", result:""
+};
+const PLACEHOLDER = { myName:"[YOUR NAME]", service:"[SERVICE]", area:"[AREA]", problem:"[PROBLEM]", clientType:"[CLIENT TYPE]", result:"[RESULT]" };
+
+/* ---------- Storage ---------- */
+const load = k => JSON.parse(localStorage.getItem(k) || "null");
+let leads = load("lf_leads") || [];
+let settings = { ...DEFAULTS, ...(load("lf_settings") || {}) };
+let log = load("lf_log") || [];
+const save = () => localStorage.setItem("lf_leads", JSON.stringify(leads));
+const addLog = t => { log.push({ d: todayStr(), t }); log = log.slice(-3000); localStorage.setItem("lf_log", JSON.stringify(log)); };
+
+/* ---------- Time zone helpers ---------- */
+function partsIn(tz, d = new Date()) {
+  const f = new Intl.DateTimeFormat("en-US", { timeZone:tz, hourCycle:"h23", year:"numeric", month:"2-digit",
+    day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit", weekday:"short" });
+  const o = {}; f.formatToParts(d).forEach(p => o[p.type] = p.value); return o;
+}
+function offsetMin(tz, d) {
+  const p = partsIn(tz, d);
+  return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - d.getTime()) / 60000;
+}
+function windowFor(code) {
+  const r = REGIONS[code], now = new Date(), p = partsIn(r.tz, now);
+  const at = h => { const g = Date.UTC(+p.year, +p.month - 1, +p.day, h); return new Date(g - offsetMin(r.tz, new Date(g)) * 60000); };
+  const s = at(r.h[0]), e = at(r.h[1]);
+  const fmt = d => d.toLocaleTimeString("en-IN", { timeZone:"Asia/Kolkata", hour:"numeric", minute:"2-digit" });
+  return {
+    text: `${fmt(s)} – ${fmt(e)} IST`, start: s,
+    status: now < s ? "later" : now <= e ? "live" : "passed",
+    weekend: r.weekend.includes(p.weekday),
+    localTime: now.toLocaleTimeString("en-US", { timeZone:r.tz, hour:"numeric", minute:"2-digit", weekday:"short" })
+  };
+}
+
+/* ---------- Messages ---------- */
+function buildMsg(l) {
+  const st = STYLE[REGIONS[l.country].style];
+  const vars = { ...PLACEHOLDER, ...Object.fromEntries(Object.entries(settings).filter(([, v]) => v)), ...l,
+                 hi: st.hi.replace("{name}", l.name), cta: st.cta };
+  return SEQ[l.stage].tpl.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+}
+const isDue = l => SEQ[l.stage] && daysBetween(l.lastDate, todayStr()) >= SEQ[l.stage].gap;
+
+/* ---------- Render: Today ---------- */
+function renderToday() {
+  const due = leads.filter(isDue), t = todayStr();
+  const reqToday = log.filter(x => x.d === t && x.t === "request").length;
+  const msgToday = log.filter(x => x.d === t && x.t === "message").length;
+  const pending = leads.filter(l => l.stage === "requested");
+  const missing = SETTING_FIELDS.filter(([k]) => !settings[k]).map(([, label]) => label.split(" (")[0]);
+  let h = "";
+  if (missing.length) h += `<div class="card banner"><b>Settings</b> mein ye bharna baaki hai: ${esc(missing.join(", "))}. Tabhi messages poore banenge.</div>`;
+  h += `<div class="card"><div class="grid">
+    <div><div class="stat">${due.length}</div><div class="muted">Aaj ke tasks</div></div>
+    <div><div class="stat" style="color:${reqToday >= 20 ? "#b91c1c" : "inherit"}">${reqToday}/20</div><div class="muted">Aaj ki connection requests (safe limit)</div></div>
+    <div><div class="stat">${msgToday}</div><div class="muted">Aaj ke messages</div></div>
+    <div><div class="stat">${pending.length}</div><div class="muted">Pending requests</div></div>
+  </div></div>`;
+  if (!due.length) h += `<div class="card">Aaj koi task nahi hai. Leads tab mein naye leads add karo.</div>`;
+
+  const groups = {};
+  due.forEach(l => (groups[l.country] = groups[l.country] || []).push(l));
+  Object.keys(groups).map(c => [c, windowFor(c)]).sort((a, b) => a[1].start - b[1].start).forEach(([c, w]) => {
+    const badge = w.weekend ? `<span class="badge weekend">Wahan weekend hai, agle working day bhejo</span>`
+      : w.status === "live" ? `<span class="badge live">Abhi best time hai</span>`
+      : w.status === "later" ? `<span class="badge">Best time thodi der mein</span>`
+      : `<span class="badge">Aaj ka best time nikal gaya</span>`;
+    h += `<div class="card"><div class="region-head"><div><h3 style="margin:0">${REGIONS[c].label}</h3>
+      <div class="muted">Wahan abhi: ${w.localTime} | Best time: ${w.text}</div></div>${badge}</div>`;
+    groups[c].forEach(l => {
+      const msg = buildMsg(l);
+      h += `<div class="task"><b>${esc(l.name)}</b> – ${esc(l.company)} <span class="badge">${SEQ[l.stage].label}</span>
+        <textarea id="msg-${l.id}" data-count="${l.stage === "new" ? 1 : 0}" data-id="${l.id}">${esc(msg)}</textarea>
+        ${l.stage === "new" ? `<div id="cnt-${l.id}" class="${msg.length > 300 ? "warn" : "muted"}">${msg.length}/300 characters</div>` : ""}
+        <div class="row">
+          <button class="btn secondary" data-act="copy" data-id="${l.id}">Copy</button>
+          <a class="btn secondary" href="${safeUrl(l.url)}" target="_blank" rel="noopener">Profile kholo</a>
+          <button class="btn ok" data-act="sent" data-id="${l.id}">Bhej diya ✓</button>
+          ${l.stage !== "new" ? `<button class="btn secondary" data-act="replied" data-id="${l.id}">Reply aaya</button>` : ""}
+        </div></div>`;
+    });
+    h += `</div>`;
+  });
+
+  if (pending.length) {
+    h += `<div class="card"><h3 style="margin-top:0">Pending connection requests</h3>
+      <p class="muted">Jinki request accept ho gayi, unke aage "Accept hua" dabao. Wo turant aaj ke tasks mein aa jayenge.</p><table>`;
+    pending.forEach(l => {
+      const old = daysBetween(l.lastDate, t) >= 14;
+      h += `<tr><td><b>${esc(l.name)}</b> – ${esc(l.company)}<div class="muted">${REGIONS[l.country].label} · bheji: ${l.lastDate}</div>
+        ${old ? `<div class="warn">14+ din se pending hai, LinkedIn par withdraw kar do</div>` : ""}</td>
+        <td style="text-align:right"><button class="btn ok" data-act="accepted" data-id="${l.id}">Accept hua</button></td></tr>`;
+    });
+    h += `</table></div>`;
+  }
+  $("#today").innerHTML = h;
+}
+
+/* ---------- Render: Leads ---------- */
+function renderLeads() {
+  const f = $("#filter-stage").value;
+  const list = leads.filter(l => !f || l.stage === f).slice().reverse();
+  let h = `<tr><th>Name</th><th>Country</th><th>Stage</th><th>Last action</th><th></th></tr>`;
+  list.forEach(l => {
+    h += `<tr><td><b>${esc(l.name)}</b><div class="muted">${esc(l.company)} · ${esc(l.industry)}</div></td>
+      <td>${REGIONS[l.country]?.label || esc(l.country)}</td>
+      <td><select data-act="stage" data-id="${l.id}">${STAGES.map(s => `<option value="${s}" ${s === l.stage ? "selected" : ""}>${STAGE_LABEL[s]}</option>`).join("")}</select></td>
+      <td>${l.lastDate}</td>
+      <td><a href="${safeUrl(l.url)}" target="_blank" rel="noopener">Profile</a> · <a href="#" data-act="del" data-id="${l.id}">Delete</a></td></tr>`;
+  });
+  if (!list.length) h += `<tr><td colspan="5" class="muted">Koi lead nahi.</td></tr>`;
+  $("#leads-table").innerHTML = h;
+}
+
+/* ---------- Render: Stats ---------- */
+function renderStats() {
+  const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+  const calc = arr => {
+    const sent = arr.filter(l => l.stage !== "new").length;
+    const acc = arr.filter(l => ACCEPTED.includes(l.stage)).length;
+    const rep = arr.filter(l => REPLIED.includes(l.stage)).length;
+    const calls = arr.filter(l => ["call_booked", "client"].includes(l.stage)).length;
+    const clients = arr.filter(l => l.stage === "client").length;
+    return { total: arr.length, sent, acc, rep, calls, clients };
+  };
+  const a = calc(leads);
+  let h = `<div class="card"><div class="grid">
+    <div><div class="stat">${a.total}</div><div class="muted">Total leads</div></div>
+    <div><div class="stat">${a.sent}</div><div class="muted">Requests bheji</div></div>
+    <div><div class="stat">${pct(a.acc, a.sent)}</div><div class="muted">Accept rate (target 30%+)</div></div>
+    <div><div class="stat">${pct(a.rep, a.acc)}</div><div class="muted">Reply rate (target 10%+)</div></div>
+    <div><div class="stat">${a.calls}</div><div class="muted">Calls booked</div></div>
+    <div><div class="stat">${a.clients}</div><div class="muted">Clients</div></div>
+  </div></div>`;
+  const tips = [];
+  if (a.sent >= 30 && a.acc / a.sent < 0.3) tips.push("Accept rate kam hai: profile headline, photo aur targeting improve karo.");
+  if (a.acc >= 20 && a.rep / a.acc < 0.1) tips.push("Reply rate kam hai: Settings mein problem aur result ko zyada specific banao.");
+  if (tips.length) h += `<div class="card banner">${tips.join("<br>")}</div>`;
+
+  h += `<div class="card"><h3 style="margin-top:0">Country-wise</h3><table>
+    <tr><th>Country</th><th>Leads</th><th>Accept rate</th><th>Reply rate</th><th>Calls</th><th>Clients</th></tr>`;
+  Object.keys(REGIONS).forEach(c => {
+    const s = calc(leads.filter(l => l.country === c));
+    if (s.total) h += `<tr><td>${REGIONS[c].label}</td><td>${s.total}</td><td>${pct(s.acc, s.sent)}</td><td>${pct(s.rep, s.acc)}</td><td>${s.calls}</td><td>${s.clients}</td></tr>`;
+  });
+  h += `</table></div><div class="card"><h3 style="margin-top:0">Pichhle 7 din</h3><table><tr><th>Date</th><th>Requests</th><th>Messages</th></tr>`;
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toLocaleDateString("en-CA");
+    h += `<tr><td>${ds}</td><td>${log.filter(x => x.d === ds && x.t === "request").length}</td><td>${log.filter(x => x.d === ds && x.t === "message").length}</td></tr>`;
+  }
+  $("#stats").innerHTML = h + `</table></div>`;
+}
+
+const renderAll = () => { renderToday(); renderLeads(); renderStats(); };
+
+/* ---------- Events ---------- */
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
+  ["today", "leads", "stats", "settings"].forEach(t => $("#" + t).classList.toggle("hidden", t !== b.dataset.tab));
+  renderAll();
+});
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el || el.tagName === "SELECT") return;
+  const l = leads.find(x => x.id === el.dataset.id); if (!l) return;
+  const act = el.dataset.act;
+  if (act === "copy") {
+    navigator.clipboard.writeText($("#msg-" + l.id).value).then(() => { el.textContent = "Copied!"; setTimeout(() => el.textContent = "Copy", 1500); });
+  } else if (act === "sent") {
+    if (l.stage === "new") {
+      const n = log.filter(x => x.d === todayStr() && x.t === "request").length;
+      if (n >= 20 && !confirm("Aaj 20 requests ho chuki hain. Account safety ke liye baaki kal bhejna better hai. Phir bhi mark karein?")) return;
+    }
+    addLog(l.stage === "new" ? "request" : "message");
+    l.stage = SEQ[l.stage].next; l.lastDate = todayStr(); save(); renderAll();
+  } else if (act === "replied" || act === "accepted") {
+    l.stage = act; l.lastDate = todayStr(); save(); renderAll();
+  } else if (act === "del") {
+    e.preventDefault();
+    if (confirm(`${l.name} ko delete karna hai?`)) { leads = leads.filter(x => x !== l); save(); renderAll(); }
+  }
+});
+
+document.addEventListener("change", e => {
+  if (e.target.dataset.act !== "stage") return;
+  const l = leads.find(x => x.id === e.target.dataset.id);
+  l.stage = e.target.value; l.lastDate = todayStr(); save(); renderAll();
+});
+
+document.addEventListener("input", e => {
+  if (e.target.dataset.count !== "1") return;
+  const c = $("#cnt-" + e.target.dataset.id), n = e.target.value.length;
+  c.textContent = `${n}/300 characters`; c.className = n > 300 ? "warn" : "muted";
+});
+
+$("#add-btn").onclick = () => {
+  const g = id => $("#f-" + id).value.trim();
+  if (!g("name") || !g("company") || !g("industry")) return alert("Name, company aur industry zaroori hain.");
+  if (g("url") && leads.some(l => l.url === g("url"))) return alert("Ye lead pehle se hai.");
+  leads.push({ id: uid(), name: g("name"), company: g("company"), industry: g("industry"), country: g("country"),
+               url: g("url"), stage: "new", lastDate: todayStr(), notes: "" });
+  save(); ["name", "company", "industry", "url"].forEach(i => $("#f-" + i).value = "");
+  $("#add-msg").textContent = "Lead add ho gaya ✓"; setTimeout(() => $("#add-msg").textContent = "", 2000);
+  renderAll();
+};
+
+const FIELDS = ["name", "company", "industry", "country", "url", "stage", "lastDate", "notes"];
+$("#export-btn").onclick = () => {
+  const csv = [FIELDS.join(","), ...leads.map(l => FIELDS.map(f => `"${String(l[f] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = `leads-${todayStr()}.csv`; a.click();
+};
+
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cur); cur = ""; }
+    else if (c === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+    else if (c !== "\r") cur += c;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+$("#import-file").onchange = async e => {
+  const file = e.target.files[0]; if (!file) return;
+  const rows = parseCSV(await file.text());
+  const head = rows.shift().map(s => s.trim());
+  let added = 0, skipped = 0;
+  rows.forEach(r => {
+    const o = Object.fromEntries(head.map((k, i) => [k, (r[i] || "").trim()]));
+    const country = (o.country || "").toUpperCase();
+    if (!o.name || !o.company || !REGIONS[country] || (o.url && leads.some(l => l.url === o.url))) { skipped++; return; }
+    leads.push({ id: uid(), name: o.name, company: o.company, industry: o.industry || "your industry", country, url: o.url || "",
+                 stage: STAGES.includes(o.stage) ? o.stage : "new", lastDate: o.lastDate || todayStr(), notes: o.notes || "" });
+    added++;
+  });
+  save(); renderAll(); e.target.value = "";
+  alert(`${added} leads add hue, ${skipped} skip hue (missing data, galat country ya duplicate).`);
+};
+
+$("#save-settings").onclick = () => {
+  SETTING_FIELDS.forEach(([k]) => settings[k] = $("#s-" + k).value.trim());
+  localStorage.setItem("lf_settings", JSON.stringify(settings));
+  $("#save-msg").textContent = "Saved ✓"; setTimeout(() => $("#save-msg").textContent = "", 2000);
+  renderAll();
+};
+
+/* ---------- Init ---------- */
+$("#f-country").innerHTML = Object.entries(REGIONS).map(([k, r]) => `<option value="${k}">${r.label}</option>`).join("");
+$("#filter-stage").innerHTML = `<option value="">Saare stages</option>` + STAGES.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join("");
+$("#filter-stage").onchange = renderLeads;
+$("#settings-grid").innerHTML = SETTING_FIELDS.map(([k, label, ph]) =>
+  `<div><label>${label}</label><input id="s-${k}" placeholder="${esc(ph)}" value="${esc(settings[k] || "")}"></div>`).join("");
+renderAll();
+</script>
+</body>
+</html>
